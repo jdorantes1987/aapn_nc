@@ -10,7 +10,7 @@ try:
         user=DB_USER,
         # Si tu usuario de la base de datos tiene una contraseña, inclúyela aquí.
         # No confundir con las credenciales de la cuenta de servicio.
-        password="*",
+        password="**",
         host="127.0.0.1",
         port=3306,
         database=DB_NAME,
@@ -20,11 +20,9 @@ try:
     # Ejemplo de operación: Obtener la versión de la base de datos
     with connection.cursor() as cursor:
         cursor.execute(
-            """SELECT id_usuario,
-                      nombre_apellido,
-                      AES_DECRYPT(password,'123') as Contrasena,
-                      status, tipo
-               FROM tbl_usuarios"""
+            """SELECT username,
+                      AES_DECRYPT(password,'123') as Contrasena
+               FROM users"""
         )
         db_row = cursor.fetchall()
         print(f"Datos de la tabla: {db_row}")
