@@ -1,6 +1,4 @@
-import os
 import sys
-from datetime import datetime
 from time import sleep
 
 import streamlit as st
@@ -36,13 +34,11 @@ def set_stage(i):
 
 
 if st.session_state.stage == 0:
-    from dotenv import load_dotenv
+    st.session_state.password = ""
 
     sys.path.append(r"..\conexiones")
     from conn.database_connector import DatabaseConnector
     from conn.mysql_connector import MySQLConnector
-
-    load_dotenv(override=True)
 
     mysql_connector = MySQLConnector(
         host=st.secrets.auth.DB_HOST,
@@ -65,10 +61,16 @@ def login(user, passw):
     return st.session_state.auth_manager.autenticar(user, passw)
 
 
-def iniciar_sesion(user):
-    st.session_state.logged_in = True
-    st.session_state.user = user
-    st.switch_page(MENU_INICIO)
+def iniciar_sesion(user, password):
+    flag, msg = login(user=user, passw=password)
+
+    if not flag:
+        st.toast(msg, icon="⚠️")
+    else:
+        st.toast(msg, icon="✅")
+        st.session_state.logged_in = True
+        st.session_state.user = user
+        st.switch_page(MENU_INICIO)
 
 
 if st.session_state.stage == 1:
@@ -89,17 +91,11 @@ if st.session_state.stage == 1:
         st.write(f"### Usuario ingresado: {st.session_state.usuario}")
 
         # Pedir la contraseña
-        password = st.text_input("Ingresa tu contraseña:", type="password")
+        pw = st.text_input("Ingresa tu contraseña:", type="password", key="password")
+        if st.session_state.password:
+            iniciar_sesion(st.session_state.usuario, st.session_state.password)
 
-        if st.button("Log in", type="primary"):
-            flag, msg = login(user=st.session_state.usuario, passw=password)
-
-        if password:
-            flag, msg = login(user=st.session_state.usuario, passw=password)
-            if not flag:
-                st.toast(msg, icon="⚠️")
-                sleep(1)
-                password = ""
-            else:
-                st.toast(msg, icon="✅")
-                iniciar_sesion(st.session_state.usuario)
+        if st.button("Atrás", type="primary"):
+            del st.session_state.usuario
+            del st.session_state.password
+            st.rerun()

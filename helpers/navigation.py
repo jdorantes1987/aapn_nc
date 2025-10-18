@@ -17,7 +17,7 @@ def make_sidebar():
         # Centrar el título
         # quitar margenes
         st.markdown(
-            "<h1 style='text-align: center; margin: 0;'>Gestión Células</h1>",
+            "<h1 style='text-align: center; margin: 0;'>Nuevo creyente</h1>",
             unsafe_allow_html=True,
         )
         # imagen desde URL
@@ -39,6 +39,7 @@ def make_sidebar():
 # TODO Rename this here and in `make_sidebar`
 def _extracted_from_make_sidebar():
     st.page_link("pages/page1.py", label="Inicio", icon=None)
+    st.page_link("pages/page2.py", label="Registro", icon=None)
 
     if st.button(
         "Cerrar sesión",
