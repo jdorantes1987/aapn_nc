@@ -1,5 +1,3 @@
-import time
-
 import streamlit as st
 
 from helpers.navigation import make_sidebar
@@ -12,7 +10,8 @@ make_sidebar()
 with st.expander("Instrucciones para registrar un nuevo creyente", expanded=False):
     texto = """
         Para registrar la información de un nuevo creyente, sigue estos pasos:
-        1. **Completa los campos requeridos**:
+        1. **Ir a la pestaña de registro**: Selecciona la pestaña **:green["Registro"]** en el menú lateral.
+        2. **Completa los campos requeridos**:
             - **:blue[Nombre]**: Ingresa el nombre del nuevo creyente.
             - **:blue[Apellido]**: Ingresa el apellido del nuevo creyente.
             - **:blue[Edad]**: Ingresa la edad del nuevo creyente.
