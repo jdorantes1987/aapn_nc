@@ -16,6 +16,7 @@ class CreyentesCRUD:
 
     def __init__(self, db):
         self.db = db
+        self.cursor = self.db.get_cursor()
 
     def create(self, data: Dict[str, Any]) -> int:
         """Inserta un nuevo creyente. Devuelve el Id insertado (si el conector lo soporta)."""
@@ -29,26 +30,27 @@ class CreyentesCRUD:
 
         query = f"INSERT INTO tbl_creyentes ({', '.join(cols)}) VALUES ({', '.join(placeholders)})"
         self.db.connection.autocommit(True)
-        cursor = self.db.get_cursor()
-        cursor.execute(query, tuple(values))
+        self.cursor.execute(query, tuple(values))
         self.db.connection.autocommit(False)
         try:
-            return cursor.lastrowid  # si el conector expone esto
+            return self.cursor.lastrowid()  # si el conector expone esto
         except Exception:
             return 0
 
     def get_by_id(self, id_value: int) -> Optional[Dict[str, Any]]:
         q = "SELECT * FROM tbl_creyentes WHERE Id = %s"
-        row = self.db.fetchone(q, (id_value,))
-        return row
+        self.cursor.execute(q, (id_value,))
+        return self.cursor.fetchone()
 
     def get_by_cedula(self, cedula: str) -> Optional[Dict[str, Any]]:
         q = "SELECT * FROM tbl_creyentes WHERE Cedula = %s"
-        return self.db.fetchone(q, (cedula,))
+        self.cursor.execute(q, (cedula,))
+        return self.cursor.fetchone()
 
     def list(self, limit: int = 100) -> List[Dict[str, Any]]:
         q = "SELECT * FROM tbl_creyentes ORDER BY Id DESC LIMIT %s"
-        return self.db.get_cursor().fetchall(q, (limit,))
+        self.cursor.execute(q, (limit,))
+        return self.cursor.fetchall()
 
     def update(self, id_value: int, data: Dict[str, Any]) -> int:
         """Actualiza campos para el Id dado. Devuelve número de filas afectadas."""
@@ -59,17 +61,21 @@ class CreyentesCRUD:
             vals.append(v)
         vals.append(id_value)
         q = f"UPDATE tbl_creyentes SET {', '.join(sets)} WHERE Id = %s"
-        cursor = self.db.execute(q, tuple(vals))
+        self.db.connection.autocommit(True)
+        cursor = self.cursor.execute(q, tuple(vals))
+        self.db.connection.autocommit(False)
         try:
-            return cursor.rowcount
+            return cursor
         except Exception:
             return 0
 
     def delete(self, id_value: int) -> int:
         q = "DELETE FROM tbl_creyentes WHERE Id = %s"
-        cursor = self.db.execute(q, (id_value,))
+        self.db.connection.autocommit(True)
+        cursor = self.cursor.execute(q, (id_value,))
+        self.db.connection.autocommit(False)
         try:
-            return cursor.rowcount
+            return cursor
         except Exception:
             return 0
 

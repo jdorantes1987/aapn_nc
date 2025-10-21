@@ -61,6 +61,7 @@ def login(user, passw):
     return st.session_state.auth_manager.autenticar(user, passw)
 
 
+@st.cache_data(show_spinner=False)
 def iniciar_sesion(user, password):
     flag, msg = login(user=user, passw=password)
 
@@ -75,9 +76,8 @@ def iniciar_sesion(user, password):
 
 if st.session_state.stage == 1:
     if "usuario" not in st.session_state:
-        st.write("Por favor ingrese su usuario.")
         # Si el usuario aún no ha sido ingresado
-        user = st.text_input("Usuario:")
+        user = st.text_input("", placeholder="Ingresa tu usuario y presiona Enter")
         if existe_user(user):
             st.session_state.usuario = user
             st.success("Usuario validado!")
@@ -91,11 +91,16 @@ if st.session_state.stage == 1:
         st.write(f"### Usuario ingresado: {st.session_state.usuario}")
 
         # Pedir la contraseña
-        pw = st.text_input("Ingresa tu contraseña:", type="password", key="password")
+        pw = st.text_input(
+            "",
+            type="password",
+            key="password",
+            placeholder="Ingresa tu contraseña y presiona Enter",
+        )
         if st.session_state.password:
             iniciar_sesion(st.session_state.usuario, st.session_state.password)
-
-        if st.button("Atrás", type="primary"):
-            del st.session_state.usuario
-            del st.session_state.password
-            st.rerun()
+        else:
+            if st.button("Atrás", type="primary"):
+                del st.session_state.usuario
+                del st.session_state.password
+                st.rerun()
