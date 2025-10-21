@@ -48,7 +48,7 @@ class CreyentesCRUD:
 
     def list(self, limit: int = 100) -> List[Dict[str, Any]]:
         q = "SELECT * FROM tbl_creyentes ORDER BY Id DESC LIMIT %s"
-        return self.db.fetchall(q, (limit,))
+        return self.db.get_cursor().fetchall(q, (limit,))
 
     def update(self, id_value: int, data: Dict[str, Any]) -> int:
         """Actualiza campos para el Id dado. Devuelve número de filas afectadas."""

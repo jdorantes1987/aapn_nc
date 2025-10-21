@@ -59,73 +59,73 @@ with st.expander("Crear nuevo creyente"):
             else:
                 st.info("Creado (id no retornado) o hubo un problema")
 
-# st.markdown("---")
+st.markdown("---")
 
-# # Listado y selección
-# st.header("Listado de creyentes")
-# rows = crud.list(200)
+# Listado y selección
+st.header("Listado de creyentes")
+rows = crud.list(200)
 
-# if not rows:
-#     st.info("No se encontraron registros.")
-# else:
-#     cols = st.columns((3, 1))
-#     with cols[0]:
-#         for r in rows:
-#             with st.expander(f"{r.get('Id')} - {r.get('Nombre')} {r.get('Apellido')}"):
-#                 st.write(r)
-#                 if st.button(f"Editar {r.get('Id')}", key=f"edit_{r.get('Id')}"):
-#                     st.session_state._editing = r.get("Id")
-#                     st.experimental_rerun()
-#                 if st.button(f"Borrar {r.get('Id')}", key=f"del_{r.get('Id')}"):
-#                     count = crud.delete(r.get("Id"))
-#                     if count:
-#                         st.success("Registro eliminado")
-#                         st.experimental_rerun()
-#                     else:
-#                         st.error("No se pudo eliminar")
+if not rows:
+    st.info("No se encontraron registros.")
+else:
+    cols = st.columns((3, 1))
+    with cols[0]:
+        for r in rows:
+            with st.expander(f"{r.get('Id')} - {r.get('Nombre')} {r.get('Apellido')}"):
+                st.write(r)
+                if st.button(f"Editar {r.get('Id')}", key=f"edit_{r.get('Id')}"):
+                    st.session_state._editing = r.get("Id")
+                    st.rerun()
+                if st.button(f"Borrar {r.get('Id')}", key=f"del_{r.get('Id')}"):
+                    count = crud.delete(r.get("Id"))
+                    if count:
+                        st.success("Registro eliminado")
+                        st.rerun()
+                    else:
+                        st.error("No se pudo eliminar")
 
-# # Edit form
-# if st.session_state.get("_editing"):
-#     id_edit = st.session_state.get("_editing")
-#     row = crud.get_by_id(id_edit)
-#     if row:
-#         st.header(f"Editar Id {id_edit}")
-#         with st.form("form_editar"):
-#             nombre = st.text_input("Nombre", value=row.get("Nombre", ""))
-#             apellido = st.text_input("Apellido", value=row.get("Apellido", ""))
-#             telefono = st.text_input(
-#                 "Teléfono Celular", value=row.get("TelefonoCelular", "")
-#             )
-#             correo = st.text_input("Correo", value=row.get("Correo", ""))
-#             codred = st.text_input("CodRed", value=row.get("CodRed", ""))
-#             fecha_nac = st.date_input(
-#                 "Fecha de nacimiento", value=row.get("FechaNac") or date.today()
-#             )
-#             estatus = st.selectbox(
-#                 "Estatus", options=[1, 0], index=0 if row.get("Estatus") == 1 else 1
-#             )
+# Edit form
+if st.session_state.get("_editing"):
+    id_edit = st.session_state.get("_editing")
+    row = crud.get_by_id(id_edit)
+    if row:
+        st.header(f"Editar Id {id_edit}")
+        with st.form("form_editar"):
+            nombre = st.text_input("Nombre", value=row.get("Nombre", ""))
+            apellido = st.text_input("Apellido", value=row.get("Apellido", ""))
+            telefono = st.text_input(
+                "Teléfono Celular", value=row.get("TelefonoCelular", "")
+            )
+            correo = st.text_input("Correo", value=row.get("Correo", ""))
+            codred = st.text_input("CodRed", value=row.get("CodRed", ""))
+            fecha_nac = st.date_input(
+                "Fecha de nacimiento", value=row.get("FechaNac") or date.today()
+            )
+            estatus = st.selectbox(
+                "Estatus", options=[1, 0], index=0 if row.get("Estatus") == 1 else 1
+            )
 
-#             submitted = st.form_submit_button("Guardar")
-#             if submitted:
-#                 payload = {
-#                     "Nombre": nombre,
-#                     "Apellido": apellido,
-#                     "TelefonoCelular": telefono,
-#                     "Correo": correo,
-#                     "CodRed": codred,
-#                     "FechaNac": fecha_nac,
-#                     "Estatus": estatus,
-#                     "fe_us_mo": None,
-#                     "co_us_mo": st.session_state.get("user_id", 0),
-#                 }
-#                 safe = CreyentesCRUD.normalize_payload(payload)
-#                 updated = crud.update(id_edit, safe)
-#                 if updated:
-#                     st.success("Actualizado")
-#                     st.session_state.pop("_editing", None)
-#                     st.experimental_rerun()
-#                 else:
-#                     st.error("No se pudo actualizar")
-#     else:
-#         st.error("Registro no encontrado")
-#         st.session_state.pop("_editing", None)
+            submitted = st.form_submit_button("Guardar")
+            if submitted:
+                payload = {
+                    "Nombre": nombre,
+                    "Apellido": apellido,
+                    "TelefonoCelular": telefono,
+                    "Correo": correo,
+                    "CodRed": codred,
+                    "FechaNac": fecha_nac,
+                    "Estatus": estatus,
+                    "fe_us_mo": None,
+                    "co_us_mo": st.session_state.get("user_id", 0),
+                }
+                safe = CreyentesCRUD.normalize_payload(payload)
+                updated = crud.update(id_edit, safe)
+                if updated:
+                    st.success("Actualizado")
+                    st.session_state.pop("_editing", None)
+                    st.rerun()
+                else:
+                    st.error("No se pudo actualizar")
+    else:
+        st.error("Registro no encontrado")
+        st.session_state.pop("_editing", None)
