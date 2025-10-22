@@ -52,6 +52,11 @@ class CreyentesCRUD:
         self.cursor.execute(q, (limit,))
         return self.cursor.fetchall()
 
+    def get_list_redes(self, limit: int = 100) -> List[Dict[str, Any]]:
+        q = "SELECT CodRed, NombreRed FROM tbl_redes ORDER BY CodRed DESC LIMIT %s"
+        self.cursor.execute(q, (limit,))
+        return self.cursor.fetchall()
+
     def update(self, id_value: int, data: Dict[str, Any]) -> int:
         """Actualiza campos para el Id dado. Devuelve número de filas afectadas."""
         sets = []

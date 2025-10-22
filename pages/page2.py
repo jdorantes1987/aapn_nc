@@ -55,8 +55,19 @@ if st.session_state.stage2 == 1:
                 index=0,
                 help="Selecciona el sexo del creyente",
             )
+
             correo = st.text_input("Correo", key="txt_correo")
-            codred = st.text_input("CodRed", key="txt_codred")
+
+            lista_redes = st.session_state.get("lista_redes", [])
+            pares_codigo_nombre = [
+                (d["CodRed"] + "|" + d["NombreRed"].strip()) for d in lista_redes
+            ]
+            codred = st.selectbox(
+                "Elije una red:",
+                options=pares_codigo_nombre,
+                index=0,
+            )
+            codred = str(codred).split("|")[0]  # Obtener solo el código
             fecha_nac = st.date_input(
                 "Fecha de nacimiento",
                 value=hoy,

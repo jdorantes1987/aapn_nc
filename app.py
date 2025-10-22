@@ -55,6 +55,7 @@ if st.session_state.stage == 0:
     st.session_state.auth_manager = AuthManager(st.session_state.conexion)
     st.session_state.creyentes_crud = CreyentesCRUD(st.session_state.conexion)
     st.session_state.lista_creyentes = st.session_state.creyentes_crud.list()
+    st.session_state.lista_redes = st.session_state.creyentes_crud.get_list_redes()
 
     set_stage(1)
 
