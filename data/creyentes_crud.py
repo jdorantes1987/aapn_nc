@@ -30,9 +30,9 @@ class CreyentesCRUD:
 
         query = f"INSERT INTO tbl_creyentes ({', '.join(cols)}) VALUES ({', '.join(placeholders)})"
         self.db.connection.autocommit(True)
-        self.cursor.execute(query, tuple(values))
-        self.db.connection.autocommit(False)
         try:
+            self.cursor.execute(query, tuple(values))
+            self.db.connection.autocommit(False)
             return self.cursor.lastrowid()  # si el conector expone esto
         except Exception:
             return 0

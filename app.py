@@ -3,6 +3,8 @@ from time import sleep
 
 import streamlit as st
 
+from data.creyentes_crud import CreyentesCRUD
+
 sys.path.append(r"..\aapn_ur")
 
 from auth import AuthManager
@@ -46,10 +48,14 @@ if st.session_state.stage == 0:
         user=st.secrets.auth.DB_USER_ADMIN,
         password=st.secrets.auth.DB_PASSWORD,
     )
-
     mysql_connector.connect()
+    # Almacenar la conexión
     st.session_state.conexion = DatabaseConnector(mysql_connector)
+    # Almacenar el gestor de autenticación en session_state
     st.session_state.auth_manager = AuthManager(st.session_state.conexion)
+    st.session_state.creyentes_crud = CreyentesCRUD(st.session_state.conexion)
+    st.session_state.lista_creyentes = st.session_state.creyentes_crud.list()
+
     set_stage(1)
 
 
