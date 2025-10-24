@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from time import sleep
 from pandas import DataFrame, to_datetime, isna
+import pandas as pd
 
 import streamlit as st
 
@@ -143,28 +144,138 @@ if st.session_state.stage2 == 2:
     st.rerun()
 
 
-# Listado y selección (ahora editable)
-with st.expander("Listado de creyentes (editor)"):
-    rows = st.session_state.lista_creyentes
-    if not rows:
-        st.warning("No se encontraron registros.")
-        # Continue with an empty list so the rest of the code can run without a large nested else
-        rows = []
-
-    # Construir DataFrame
-    df = DataFrame(rows)
-    # Asegurar columnas esperadas
+def build_creyentes_df(rows):
+    df = DataFrame(rows) if rows else DataFrame()
+    # Ensure Id column
     if "Id" not in df.columns:
         df["Id"] = df.index
-    # Normalizar FechaNac a date (si viene como string/timestamp)
+    # Normalize FechaNac to date
     if "FechaNac" in df.columns:
         df["FechaNac"] = to_datetime(df["FechaNac"], errors="coerce").dt.date
-    # Añadir columna para marcar eliminación
+    # Add Eliminar flag
     df["Eliminar"] = False
+    return df
 
+
+def process_editor_changes(edited_df, original_df):
+    """
+    Procesa cambios del data_editor.
+    - Detecta filas con 'Eliminar' == True y llama a delete(id).
+    - Detecta filas editadas (comparando por Id) y llama a update(id, payload).
+    - Actualiza el listado en session_state y fuerza rerun cuando hay cambios.
+    """
+    if edited_df is None or edited_df.empty:
+        return
+
+    any_deleted = False
+    any_updated = False
+
+    # Manejar eliminaciones
+    if "Eliminar" in edited_df.columns:
+        to_delete = edited_df.loc[edited_df["Eliminar"], "Id"].tolist()
+        if to_delete:
+            for id_val in to_delete:
+                try:
+                    id_int = int(id_val)
+                except Exception:
+                    st.error(f"Id inválido para eliminar: {id_val}")
+                    continue
+                try:
+                    deleted = st.session_state.creyentes_crud.delete(id_int)
+                except Exception as e:
+                    st.error(f"Error eliminando Id {id_int}: {e}")
+                    deleted = False
+                if deleted:
+                    st.success(f"Registro {id_int} eliminado")
+                    any_deleted = True
+                else:
+                    st.error(f"No se pudo eliminar Id {id_int}")
+
+    # Manejar actualizaciones (comparar fila por Id)
+    # Ignorar columnas de control
+    ignore_cols = {"Id", "Eliminar"}
+    for _, row in edited_df.iterrows():
+        id_val = row.get("Id", None)
+        if id_val is None:
+            continue
+        try:
+            id_int = int(id_val)
+        except Exception:
+            st.error(f"Id inválido en edición: {id_val}")
+            continue
+
+        orig_rows = original_df[original_df["Id"] == id_int]
+        if orig_rows.empty:
+            # fila nueva o no encontrada en original; saltar
+            continue
+        orig = orig_rows.iloc[0]
+
+        payload = {}
+        changed = False
+
+        for col in edited_df.columns:
+            if col in ignore_cols:
+                continue
+            # Si columna no está en original, comparar igual (puede ser nueva columna)
+            new_val = row[col]
+            old_val = orig.get(col, None) if col in orig.index else None
+
+            # Normalizar NaN/NAT
+            if isna(old_val):
+                old_val = None
+            if isna(new_val):
+                new_val = None
+
+            # Normalizar datetime-like a date (si la columna FechaNac viene como Timestamp)
+            if col == "FechaNac" and new_val is not None:
+                if isinstance(new_val, (pd.Timestamp, datetime)):
+                    new_val = new_val.date()
+                # si old_val es Timestamp, convertir para comparación
+                if isinstance(old_val, (pd.Timestamp, datetime)):
+                    old_val = old_val.date()
+
+            # Mapear boolean-like (p. ej. Encuentro) a boolean
+            if isinstance(new_val, (str,)) and new_val.lower() in {"true", "false"}:
+                new_val = True if new_val.lower() == "true" else False
+
+            # Comparar
+            if old_val != new_val:
+                # Normalizar valores a mayúsculas si es string
+                payload[col] = new_val.upper() if isinstance(new_val, str) else new_val
+                changed = True
+
+        if changed:
+            # Añadir campos requeridos por normalize_payload / update
+            payload["co_us_mo"] = st.session_state.get("user", 0)
+            # Asegurar FechaNac en payload (puede ser None)
+            payload.setdefault("FechaNac", payload.get("FechaNac", None))
+
+            try:
+                safe = st.session_state.creyentes_crud.normalize_payload(payload)
+                updated = st.session_state.creyentes_crud.update(id_int, safe)
+            except Exception as e:
+                st.error(f"Error actualizando Id {id_int}: {e}")
+                updated = False
+
+            if updated:
+                st.success(f"Id {id_int} actualizado")
+                any_updated = True
+            else:
+                st.error(f"No se pudo actualizar Id {id_int}")
+
+    # Si hubo cambios (borrados o actualizaciones), refrescar listado y recargar la página
+    if any_deleted or any_updated:
+        actualizar_listado()
+        st.rerun()
+
+
+def render_creyentes_editor():
+    rows = st.session_state.lista_creyentes or []
+    if not rows:
+        st.warning("No se encontraron registros.")
+    df = build_creyentes_df(rows)
     original_df = df.copy(deep=True)
 
-    # Mostrar editor editable
     edited = st.data_editor(
         df,
         column_config={
@@ -174,85 +285,12 @@ with st.expander("Listado de creyentes (editor)"):
                 width="large",
             ),
         },
-        num_rows="dynamic",
-        #  Permite ajustar el ancho al tamaño del contenedor
-        use_container_width=True,
     )
 
-    # Procesar eliminaciones
-    to_delete = edited.loc[edited["Eliminar"], "Id"].tolist()
-    if to_delete:
-        for id_del in to_delete:
-            try:
-                id_int = int(id_del)
-            except Exception:
-                st.error(f"Id inválido para eliminar: {id_del}")
-                continue
-            count = st.session_state.creyentes_crud.delete(id_int)
-            if count:
-                actualizar_listado()
-                st.success(f"Registro {id_int} eliminado")
-                sleep(1)
-                set_stage(2)
-                st.rerun()
-            else:
-                st.error(f"No se pudo eliminar Id {id_int}")
+    process_editor_changes(edited, original_df)
 
-    # Procesar actualizaciones: detectar cambios por Id (ignorar columna Eliminar)
-    key_cols = [
-        "Nombre",
-        "Apellido",
-        "TelefonoCelular",
-        "Correo",
-        "IdProfesion",
-        "Ocupacion",
-        "Sexo",
-        "CodRed",
-        "FechaNac",
-        "Encuentro",
-        "Estatus",
-    ]
-    for _, row in edited.iterrows():
-        id_val = row["Id"]
-        # Buscar la fila original
-        orig_rows = original_df[original_df["Id"] == id_val]
-        if orig_rows.empty:
-            continue
-        orig = orig_rows.iloc[0]
-        changed = False
-        payload = {}
-        for col in key_cols:
-            if col in edited.columns:
-                new_val = row[col]
-                old_val = orig.get(col, None)
-                # Normalizar NaT/NaN a None
-                if isna(old_val):
-                    old_val = None
-                if isna(new_val):
-                    new_val = None
-                if old_val != new_val:
-                    payload[col] = new_val
-                    changed = True
-        if changed:
-            # Añadir campos requeridos por normalize_payload / update
-            # Ajustar campos que espera el CRUD
-            payload.setdefault("FechaNac", payload.get("FechaNac", None))
-            payload["co_us_mo"] = st.session_state.get("user", 0)
-            payload["fe_us_mo"] = datetime.now()
-            # Mantener fe_us_in original
-            payload["fe_us_in"] = row["fe_us_in"]
-            safe = st.session_state.creyentes_crud.normalize_payload(payload)
-            try:
-                updated = st.session_state.creyentes_crud.update(int(id_val), safe)
-            except Exception as e:
-                st.error(f"Error actualizando Id {id_val}: {e}")
-                updated = False
-            if updated:
-                st.success(f"Id {id_val} actualizado")
-                sleep(1)
-                actualizar_listado()
-            else:
-                st.error(f"No se pudo actualizar Id {id_val}")
 
-            set_stage(2)
-            st.rerun()
+# Replace the big if-body with a single call
+if st.session_state.rol_user.has_permission("Creyentes", "update"):
+    with st.expander("Listado de creyentes (editor)"):
+        render_creyentes_editor()
