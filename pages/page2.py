@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from time import sleep
-from pandas import DataFrame, to_datetime, isna
-import pandas as pd
+from pandas import DataFrame, to_datetime, isna, Timestamp
 
 import streamlit as st
 
@@ -228,10 +227,10 @@ def process_editor_changes(edited_df, original_df):
 
             # Normalizar datetime-like a date (si la columna FechaNac viene como Timestamp)
             if col == "FechaNac" and new_val is not None:
-                if isinstance(new_val, (pd.Timestamp, datetime)):
+                if isinstance(new_val, (Timestamp, datetime)):
                     new_val = new_val.date()
                 # si old_val es Timestamp, convertir para comparación
-                if isinstance(old_val, (pd.Timestamp, datetime)):
+                if isinstance(old_val, (Timestamp, datetime)):
                     old_val = old_val.date()
 
             # Mapear boolean-like (p. ej. Encuentro) a boolean
