@@ -48,7 +48,11 @@ if st.session_state.stage == 0:
         user=st.secrets.auth.DB_USER_ADMIN,
         password=st.secrets.auth.DB_PASSWORD,
     )
-    mysql_connector.connect()
+    try:
+        mysql_connector.connect()
+    except Exception as e:
+        st.error(f"No se pudo conectar a la base de datos: {e}")
+        st.stop()
     # Almacenar la conexión
     st.session_state.conexion = DatabaseConnector(mysql_connector)
     # Almacenar el gestor de autenticación en session_state
@@ -56,6 +60,9 @@ if st.session_state.stage == 0:
     st.session_state.creyentes_crud = CreyentesCRUD(st.session_state.conexion)
     st.session_state.lista_creyentes = st.session_state.creyentes_crud.list()
     st.session_state.lista_redes = st.session_state.creyentes_crud.get_list_redes()
+    st.session_state.lista_profesiones = (
+        st.session_state.creyentes_crud.get_list_profesiones(limit=200)
+    )
 
     set_stage(1)
 
