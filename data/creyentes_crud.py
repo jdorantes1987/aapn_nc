@@ -67,7 +67,14 @@ class CreyentesCRUD:
 
     def get_list_redes(self, limit: int = 100) -> List[Dict[str, Any]]:
         self.db.connection.connect()
-        query = "SELECT CodRed, NombreRed FROM tbl_redes ORDER BY CodRed DESC LIMIT %s"
+        query = "SELECT CodRed, NombreRed FROM tbl_redes ORDER BY CodRed ASC LIMIT %s"
+        self.cursor.execute(query, (limit,))
+        fetch = self.cursor.fetchall()
+        return fetch
+
+    def get_list_profesiones(self, limit: int = 100) -> List[Dict[str, Any]]:
+        self.db.connection.connect()
+        query = "SELECT IdProfesion, DescripcionProfesion FROM tbl_profesiones ORDER BY IdProfesion ASC LIMIT %s"
         self.cursor.execute(query, (limit,))
         fetch = self.cursor.fetchall()
         return fetch
