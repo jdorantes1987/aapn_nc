@@ -8,6 +8,7 @@ from data.creyentes_crud import CreyentesCRUD
 sys.path.append(r"..\aapn_ur")
 
 from auth import AuthManager
+from role_manager_db import RoleManagerDB
 
 # Configuración de página con fondo personalizado
 st.set_page_config(
@@ -57,6 +58,7 @@ if st.session_state.stage == 0:
     st.session_state.conexion = DatabaseConnector(mysql_connector)
     # Almacenar el gestor de autenticación en session_state
     st.session_state.auth_manager = AuthManager(st.session_state.conexion)
+    st.session_state.role_manager = RoleManagerDB(st.session_state.conexion)
     st.session_state.creyentes_crud = CreyentesCRUD(st.session_state.conexion)
     st.session_state.lista_creyentes = st.session_state.creyentes_crud.list()
     st.session_state.lista_redes = st.session_state.creyentes_crud.get_list_redes()
@@ -82,20 +84,33 @@ def iniciar_sesion(user, password):
     if not flag:
         st.toast(msg, icon="⚠️")
     else:
-        st.toast(msg, icon="✅")
-        st.session_state.logged_in = True
-        st.session_state.user = user
-        st.switch_page(MENU_INICIO)
+        # Verificar permisos
+        if st.session_state.rol_user.has_permission("Creyentes", "create"):
+            st.toast(msg, icon="✅")
+            st.session_state.logged_in = True
+            st.session_state.user = user
+            st.switch_page(MENU_INICIO)
+        else:
+            st.error("No tienes permisos para acceder a esta aplicación.")
+            del st.session_state.usuario
+            sleep(0.5)
+            st.session_state.logged_in = False
+            set_stage(0)
+            st.rerun()
 
 
 if st.session_state.stage == 1:
     if "usuario" not in st.session_state:
         # Si el usuario aún no ha sido ingresado
-        user = st.text_input("", placeholder="Ingresa tu usuario y presiona Enter")
+        user = st.text_input(
+            "", placeholder="Ingresa tu usuario y presiona Enter"
+        ).lower()
         if existe_user(user):
             st.session_state.usuario = user
             st.success("Usuario validado!")
-            sleep(1)
+            st.session_state.rol_user = (
+                st.session_state.role_manager.load_user_by_username(user)
+            )
             st.rerun()
         else:
             if user:
