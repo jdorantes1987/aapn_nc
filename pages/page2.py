@@ -39,8 +39,9 @@ if "conexion" not in st.session_state or st.session_state.conexion is None:
     )
     st.stop()
 
+# Formulario de creación
 if st.session_state.stage2 >= 1:
-    with st.expander("Crear nuevo creyente"):
+    with st.expander("Nuevo creyente"):
         with st.form("form_crear", clear_on_submit=True):
             hoy = date.today()
             # Define the allowed date range
@@ -48,12 +49,12 @@ if st.session_state.stage2 >= 1:
             max_allowed_date = hoy
             cedula = st.text_input(
                 "Cédula",
-                help="Número de cédula sin guiones ni espacios",
+                placeholder="Sin guiones ni espacios",
                 key="txt_cedula",
-            )
-            nombre = st.text_input("Nombre", key="txt_nombre")
-            apellido = st.text_input("Apellido", key="txt_apellido")
-            telefono = st.text_input("Teléfono Celular", key="txt_telefono")
+            ).upper()
+            nombre = st.text_input("Nombre", key="txt_nombre").upper()
+            apellido = st.text_input("Apellido", key="txt_apellido").upper()
+            telefono = st.text_input("Teléfono Celular", key="txt_telefono").upper()
             sexo = st.selectbox(
                 "Sexo",
                 options=["M", "F"],
@@ -61,12 +62,27 @@ if st.session_state.stage2 >= 1:
                 help="Selecciona el sexo del creyente",
             )
 
-            correo = st.text_input("Correo", key="txt_correo")
+            correo = st.text_input("Correo", key="txt_correo").lower()
+
+            lista_profesiones = st.session_state.get("lista_profesiones", [])
+            pares_codigo_nombre = [
+                (str(d["IdProfesion"]) + "|" + d["DescripcionProfesion"].strip())
+                for d in lista_profesiones
+            ]
+            profesion = st.selectbox(
+                "Elije una profesión:",
+                options=pares_codigo_nombre,
+                index=0,
+            )
+            profesion = str(profesion).split("|")[0]  # Obtener solo el IdProfesion
+
+            ocupacion = st.text_input("Ocupación", key="txt_ocupacion").upper()
 
             lista_redes = st.session_state.get("lista_redes", [])
             pares_codigo_nombre = [
                 (d["CodRed"] + "|" + d["NombreRed"].strip()) for d in lista_redes
             ]
+
             codred = st.selectbox(
                 "Elije una red:",
                 options=pares_codigo_nombre,
@@ -97,7 +113,8 @@ if st.session_state.stage2 >= 1:
                     "Cedula": cedula,
                     "Nombre": nombre,
                     "Apellido": apellido,
-                    "IdProfesion": 17,
+                    "IdProfesion": profesion,  # Valor por defecto temporal
+                    "Ocupacion": ocupacion,
                     "TelefonoCelular": telefono,
                     "Correo": correo,
                     "CodRed": codred,
@@ -125,8 +142,8 @@ if st.session_state.stage2 == 2:
     set_stage(1)
     st.rerun()
 
-# Listado y selección (ahora editable)
 
+# Listado y selección (ahora editable)
 with st.expander("Listado de creyentes (editor)"):
     rows = st.session_state.lista_creyentes
     if not rows:
@@ -232,5 +249,10 @@ with st.expander("Listado de creyentes (editor)"):
                 updated = False
             if updated:
                 st.success(f"Id {id_val} actualizado")
+                sleep(1)
+                actualizar_listado()
             else:
                 st.error(f"No se pudo actualizar Id {id_val}")
+
+            set_stage(2)
+            st.rerun()
