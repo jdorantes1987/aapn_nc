@@ -248,6 +248,10 @@ def process_editor_changes(edited_df, original_df):
             payload["co_us_mo"] = st.session_state.get("user", 0)
             # Asegurar FechaNac en payload (puede ser None)
             payload.setdefault("FechaNac", payload.get("FechaNac", None))
+            # Mantener fecha de creación original
+            payload["fe_us_in"] = row["fe_us_in"]
+            # Mantener usuario de creación original
+            payload["co_us_in"] = row["co_us_in"]
 
             try:
                 safe = st.session_state.creyentes_crud.normalize_payload(payload)
