@@ -7,8 +7,8 @@ from data.creyentes_crud import CreyentesCRUD
 
 sys.path.append(r"..\aapn_ur")
 
-from auth import AuthManager
-from role_manager_db import RoleManagerDB
+from auth import AuthManager  # noqa: E402
+from role_manager_db import RoleManagerDB  # noqa: E402
 
 # Configuración de página con fondo personalizado
 st.set_page_config(
