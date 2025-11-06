@@ -1,6 +1,5 @@
 from datetime import date, datetime
 from time import sleep
-from pandas import DataFrame, to_datetime, isna, Timestamp
 
 import streamlit as st
 
@@ -47,14 +46,24 @@ if st.session_state.stage2 >= 1:
             # Define the allowed date range
             min_allowed_date = date(1950, 1, 1)
             max_allowed_date = hoy
+            nacionalidad = st.selectbox(
+                "Nacionalidad",
+                options=["V", "E"],
+                index=0,
+                help="Selecciona la nacionalidad del creyente",
+            )
             cedula = st.text_input(
                 "Cédula",
-                placeholder="Sin guiones ni espacios",
+                placeholder="Sin guiones ni espacios ejemplo: V12345678",
                 key="txt_cedula",
             ).upper()
             nombre = st.text_input("Nombre", key="txt_nombre").upper()
             apellido = st.text_input("Apellido", key="txt_apellido").upper()
-            telefono = st.text_input("Teléfono Celular", key="txt_telefono").upper()
+            telefono = st.text_input(
+                "Teléfono Celular",
+                key="txt_telefono",
+                placeholder="Sin guiones ni espacios ejemplo: 4143456789",
+            ).upper()
             sexo = st.selectbox(
                 "Sexo",
                 options=["M", "F"],
@@ -83,6 +92,12 @@ if st.session_state.stage2 >= 1:
                 (d["CodRed"] + "|" + d["NombreRed"].strip()) for d in lista_redes
             ]
 
+            estado_civil = st.selectbox(
+                "Estado Civil",
+                options=["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)"],
+                index=0,
+            )
+
             codred = st.selectbox(
                 "Elije una red:",
                 options=pares_codigo_nombre,
@@ -96,7 +111,6 @@ if st.session_state.stage2 >= 1:
                 min_value=min_allowed_date,
                 max_value=max_allowed_date,
             )
-            encuentro = st.checkbox("Culminó el encuentro", value=False)
             estatus = st.selectbox(
                 "Estatus",
                 options=[1, 0],
@@ -111,15 +125,20 @@ if st.session_state.stage2 >= 1:
                 max_allowed_date = hoy
                 payload = {
                     "Cedula": cedula,
+                    "Nacionalidad": nacionalidad,
                     "Nombre": nombre,
                     "Apellido": apellido,
-                    "IdProfesion": profesion,  # Valor por defecto temporal
+                    "IdProfesion": profesion,
                     "Ocupacion": ocupacion,
                     "TelefonoCelular": telefono,
                     "Correo": correo,
+                    "EstadoCivil": estado_civil[0],  # Solo la primera letra
                     "CodRed": codred,
                     "FechaNac": fecha_nac if fecha_nac else None,
-                    "Encuentro": encuentro,
+                    "Consolidacion": 0,
+                    "Encuentro": 0,
+                    "Academia": 0,
+                    "Lanzamiento": 0,
                     "Estatus": estatus,
                     "Sexo": sexo,
                     "co_us_in": st.session_state.get("user", 0),
@@ -144,6 +163,8 @@ if st.session_state.stage2 == 2:
 
 
 def build_creyentes_df(rows):
+    from pandas import DataFrame, to_datetime
+
     df = DataFrame(rows) if rows else DataFrame()
     # Ensure Id column
     if "Id" not in df.columns:
@@ -163,6 +184,8 @@ def process_editor_changes(edited_df, original_df):
     - Detecta filas editadas (comparando por Id) y llama a update(id, payload).
     - Actualiza el listado en session_state y fuerza rerun cuando hay cambios.
     """
+    from pandas import isna, Timestamp
+
     if edited_df is None or edited_df.empty:
         return
 
@@ -248,6 +271,10 @@ def process_editor_changes(edited_df, original_df):
             payload["co_us_mo"] = st.session_state.get("user", 0)
             # Asegurar FechaNac en payload (puede ser None)
             payload.setdefault("FechaNac", payload.get("FechaNac", None))
+            # Mantener fecha de creación original
+            payload["fe_us_in"] = row["fe_us_in"]
+            # Mantener usuario de creación original
+            payload["co_us_in"] = row["co_us_in"]
 
             try:
                 safe = st.session_state.creyentes_crud.normalize_payload(payload)
@@ -278,12 +305,45 @@ def render_creyentes_editor():
     edited = st.data_editor(
         df,
         column_config={
+            "Consolidacion": st.column_config.CheckboxColumn(
+                "Consolidación?",
+                help="Culminó la consolidación.",
+                width="large",
+            ),
             "Encuentro": st.column_config.CheckboxColumn(
                 "Encuentro?",
                 help="Culminó el encuentro.",
                 width="large",
             ),
+            "Academia": st.column_config.CheckboxColumn(
+                "Academia?",
+                help="Culminó la academia.",
+                width="large",
+            ),
+            "Lanzamiento": st.column_config.CheckboxColumn(
+                "Lanzamiento?",
+                help="Culminó el lanzamiento.",
+                width="large",
+            ),
+            "FechaNac": st.column_config.DateColumn(
+                "Fecha de Nacimiento",
+                help="Fecha de nacimiento del creyente.",
+                format="DD/MM/YYYY",
+            ),
+            "FechaIngreso": st.column_config.DateColumn(
+                "Fecha de Nacimiento",
+                help="Fecha de nacimiento del creyente.",
+                format="DD/MM/YYYY",
+            ),
+            "Estatus": st.column_config.CheckboxColumn(
+                "Estatus?",
+                help="Activo/Inactivo",
+                width="large",
+            ),
         },
+        use_container_width=True,
+        disabled=["Id", "co_us_in", "fe_us_in"],
+        hide_index=True,
     )
 
     process_editor_changes(edited, original_df)
