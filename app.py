@@ -5,7 +5,8 @@ import streamlit as st
 
 from data.creyentes_crud import CreyentesCRUD
 
-sys.path.append(r"..\aapn_ur")
+sys.path.append(r"../aapn_ur")
+sys.path.append("../authenticator")
 
 from auth import AuthManager  # noqa: E402
 from role_manager_db import RoleManagerDB  # noqa: E402
@@ -39,7 +40,7 @@ def set_stage(i):
 if st.session_state.stage == 0:
     st.session_state.password = ""
 
-    sys.path.append(r"..\conexiones")
+    sys.path.append(r"../conexiones")
     from conn.database_connector import DatabaseConnector
     from conn.mysql_connector import MySQLConnector
 
