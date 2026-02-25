@@ -49,6 +49,7 @@ if st.session_state.stage == 0:
         database=st.secrets.auth.DB_NAME,
         user=st.secrets.auth.DB_USER_ADMIN,
         password=st.secrets.auth.DB_PASSWORD,
+        port=st.secrets.auth.DB_PORT,
     )
     try:
         mysql_connector.connect()
