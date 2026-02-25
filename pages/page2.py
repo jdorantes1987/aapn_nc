@@ -54,7 +54,7 @@ if st.session_state.stage2 >= 1:
             )
             cedula = st.text_input(
                 "Cédula",
-                placeholder="Sin guiones ni espacios ejemplo: V12345678",
+                placeholder="Sin guiones ni espacios ejemplo: 12345678",
                 key="txt_cedula",
             ).upper()
             nombre = st.text_input("Nombre", key="txt_nombre").upper()
