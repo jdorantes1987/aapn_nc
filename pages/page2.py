@@ -98,6 +98,20 @@ if st.session_state.stage2 >= 1:
                 index=0,
             )
 
+            fecha_convivencia = st.date_input(
+                "Fecha de convivencia",
+                value=None,
+                format="DD/MM/YYYY",
+                min_value=min_allowed_date,
+                max_value=max_allowed_date,
+            )
+            fecha_matrimonio = st.date_input(
+                "Fecha de matrimonio",
+                value=None,
+                format="DD/MM/YYYY",
+                min_value=min_allowed_date,
+                max_value=max_allowed_date,
+            )
             codred = st.selectbox(
                 "Elije una red:",
                 options=pares_codigo_nombre,
@@ -133,6 +147,10 @@ if st.session_state.stage2 >= 1:
                     "TelefonoCelular": telefono,
                     "Correo": correo,
                     "EstadoCivil": estado_civil[0],  # Solo la primera letra
+                    "FechaConvivencia": (
+                        fecha_convivencia if fecha_convivencia else None
+                    ),
+                    "FechaMatrimonio": (fecha_matrimonio if fecha_matrimonio else None),
                     "CodRed": codred,
                     "FechaNac": fecha_nac if fecha_nac else None,
                     "Consolidacion": 0,

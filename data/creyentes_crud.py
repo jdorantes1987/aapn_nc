@@ -134,6 +134,8 @@ class CreyentesCRUD:
             "FechaIngreso",
             "Nacionalidad",
             "EstadoCivil",
+            "FechaConvivencia",
+            "FechaMatrimonio",
             "Encuentro",
             "Consolidacion",
             "Academia",
