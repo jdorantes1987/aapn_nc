@@ -317,6 +317,22 @@ def render_creyentes_editor():
     rows = st.session_state.lista_creyentes or []
     if not rows:
         st.warning("No se encontraron registros.")
+        return
+
+    # Filtrar sin usar pandas por columna fe_us_in para mostrar solo los registros creados hoy
+    hoy = date.today()
+    rows = [
+        row
+        for row in rows
+        if "fe_us_in" in row
+        and row["fe_us_mo"] is not None
+        and row["fe_us_mo"].date() == hoy
+    ]
+
+    if not rows:
+        st.info("No hay registros creados hoy.")
+        return
+
     df = build_creyentes_df(rows)
     original_df = df.copy(deep=True)
 
@@ -326,22 +342,22 @@ def render_creyentes_editor():
             "Consolidacion": st.column_config.CheckboxColumn(
                 "Consolidación?",
                 help="Culminó la consolidación.",
-                width="large",
+                width="small",
             ),
             "Encuentro": st.column_config.CheckboxColumn(
                 "Encuentro?",
                 help="Culminó el encuentro.",
-                width="large",
+                width="small",
             ),
             "Academia": st.column_config.CheckboxColumn(
                 "Academia?",
                 help="Culminó la academia.",
-                width="large",
+                width="small",
             ),
             "Lanzamiento": st.column_config.CheckboxColumn(
                 "Lanzamiento?",
                 help="Culminó el lanzamiento.",
-                width="large",
+                width="small",
             ),
             "FechaNac": st.column_config.DateColumn(
                 "Fecha de Nacimiento",
@@ -360,7 +376,15 @@ def render_creyentes_editor():
             ),
         },
         use_container_width=True,
-        disabled=["Id", "co_us_in", "fe_us_in"],
+        disabled=[
+            "Id",
+            "co_us_in",
+            "fe_us_in",
+            "Consolidacion",
+            "Encuentro",
+            "Academia",
+            "Lanzamiento",
+        ],
         hide_index=True,
     )
 
