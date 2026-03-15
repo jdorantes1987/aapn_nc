@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from time import sleep
 
 import streamlit as st
 
@@ -27,9 +26,53 @@ def set_stage(i):
     st.session_state.stage2 = i
 
 
+def reset_nuevo_creyente_controles():
+    hoy = date.today()
+
+    # Restablecer widgets de valor fijo antes de su instanciación.
+    st.session_state.txt_cedula = ""
+    st.session_state.txt_nombre = ""
+    st.session_state.txt_apellido = ""
+    st.session_state.txt_telefono = ""
+    st.session_state.txt_correo = ""
+    st.session_state.txt_ocupacion = ""
+    st.session_state.estado_civil_select = "Soltero(a)"
+    st.session_state.fecha_nac_input = hoy
+    st.session_state.sel_nacionalidad = "V"
+    st.session_state.sel_sexo = "M"
+    st.session_state.sel_estatus = 1
+
+    # Limpiar widgets de opciones dinámicas.
+    st.session_state.pop("sel_profesion", None)
+    st.session_state.pop("sel_codred", None)
+    st.session_state.pop("fecha_convivencia_input", None)
+    st.session_state.pop("fecha_matrimonio_input", None)
+
+    # Restaurar claves auxiliares (no widgets).
+    st.session_state.estado_civil_seleccionado = "Soltero(a)"
+    st.session_state.estado_civil_actual = "Soltero(a)"
+
+
 # Inicializar campos de texto
 if st.session_state.stage2 == 0:
+    st.session_state.edo_civil = ""
     set_stage(1)
+
+if "estado_civil_seleccionado" not in st.session_state:
+    st.session_state.estado_civil_seleccionado = "Soltero(a)"
+
+if "estado_civil_actual" not in st.session_state:
+    st.session_state.estado_civil_actual = "Soltero(a)"
+
+if "fecha_nac_input" not in st.session_state:
+    st.session_state.fecha_nac_input = date.today()
+
+if "reset_nuevo_creyente_pending" not in st.session_state:
+    st.session_state.reset_nuevo_creyente_pending = False
+
+if st.session_state.reset_nuevo_creyente_pending:
+    reset_nuevo_creyente_controles()
+    st.session_state.reset_nuevo_creyente_pending = False
 
 # Requiere que la conexión esté disponible en session_state como 'conexion'
 if "conexion" not in st.session_state or st.session_state.conexion is None:
@@ -40,70 +83,102 @@ if "conexion" not in st.session_state or st.session_state.conexion is None:
 
 # Formulario de creación
 if st.session_state.stage2 >= 1:
-    with st.expander("Nuevo creyente"):
-        with st.form("form_crear", clear_on_submit=True):
-            hoy = date.today()
-            # Define the allowed date range
-            min_allowed_date = date(1950, 1, 1)
-            max_allowed_date = hoy
+    # con icono de nuevo registro asterisco verde
+    with st.expander("🟢 Nuevo creyente"):
+        hoy = date.today()
+        # Define the allowed date range
+        min_allowed_date = date(1950, 1, 1)
+        max_allowed_date = hoy
+
+        col1, col2 = st.columns([0.10, 0.90])
+        with col1:
             nacionalidad = st.selectbox(
-                "Nacionalidad",
+                "🌐 Nacionalidad",
                 options=["V", "E"],
                 index=0,
                 help="Selecciona la nacionalidad del creyente",
+                key="sel_nacionalidad",
             )
+        with col2:
             cedula = st.text_input(
-                "Cédula",
+                "🆔 Cédula",
                 placeholder="Sin guiones ni espacios ejemplo: 12345678",
                 key="txt_cedula",
             ).upper()
-            nombre = st.text_input("Nombre", key="txt_nombre").upper()
-            apellido = st.text_input("Apellido", key="txt_apellido").upper()
+
+        col3, col4 = st.columns([0.50, 0.50])
+        with col3:
+            nombre = st.text_input("📝 Nombre", key="txt_nombre").upper()
+        with col4:
+            apellido = st.text_input("📝 Apellido", key="txt_apellido").upper()
+
+        col5, col6, col7, col8 = st.columns([0.24, 0.10, 0.23, 0.43])
+
+        with col5:
             telefono = st.text_input(
-                "Teléfono Celular",
+                "📞 Teléfono Celular",
                 key="txt_telefono",
-                placeholder="Sin guiones ni espacios ejemplo: 4143456789",
+                help="Sin guiones ni espacios ejemplo: 4143456789",
             ).upper()
+        with col6:
             sexo = st.selectbox(
-                "Sexo",
+                "⚧ Sexo",
                 options=["M", "F"],
                 index=0,
                 help="Selecciona el sexo del creyente",
+                key="sel_sexo",
+            )
+        with col7:
+            fecha_nac = st.date_input(
+                "📅 Fecha de nacimiento",
+                format="DD/MM/YYYY",
+                min_value=min_allowed_date,
+                max_value=max_allowed_date,
+                key="fecha_nac_input",
             )
 
-            correo = st.text_input("Correo", key="txt_correo").lower()
+        with col8:
+            correo = st.text_input("📧 Correo", key="txt_correo").lower()
 
-            lista_profesiones = st.session_state.get("lista_profesiones", [])
-            pares_codigo_nombre = [
-                (str(d["IdProfesion"]) + "|" + d["DescripcionProfesion"].strip())
-                for d in lista_profesiones
-            ]
-            profesion = st.selectbox(
-                "Elije una profesión:",
-                options=pares_codigo_nombre,
-                index=0,
-            )
-            profesion = str(profesion).split("|")[0]  # Obtener solo el IdProfesion
+        lista_profesiones = st.session_state.get("lista_profesiones", [])
+        pares_codigo_nombre = [
+            (str(d["IdProfesion"]) + "|" + d["DescripcionProfesion"].strip())
+            for d in lista_profesiones
+        ]
+        profesion = st.selectbox(
+            "Elije una profesión:",
+            options=pares_codigo_nombre,
+            index=0,
+            key="sel_profesion",
+        )
+        profesion = str(profesion).split("|")[0]  # Obtener solo el IdProfesion
 
-            ocupacion = st.text_input("Ocupación", key="txt_ocupacion").upper()
+        ocupacion = st.text_input("Ocupación", key="txt_ocupacion").upper()
 
-            lista_redes = st.session_state.get("lista_redes", [])
-            pares_codigo_nombre = [
-                (d["CodRed"] + "|" + d["NombreRed"].strip()) for d in lista_redes
-            ]
+        lista_redes = st.session_state.get("lista_redes", [])
+        pares_codigo_nombre = [
+            (d["CodRed"] + "|" + d["NombreRed"].strip()) for d in lista_redes
+        ]
 
-            estado_civil = st.selectbox(
-                "Estado Civil",
-                options=["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)"],
-                index=0,
-            )
+        estado_civil = st.selectbox(
+            "Estado Civil",
+            options=["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)"],
+            index=0,
+            key="estado_civil_select",
+        )
+        st.session_state.estado_civil_seleccionado = estado_civil
+        st.session_state.estado_civil_actual = estado_civil
 
+        fecha_convivencia = None
+        fecha_matrimonio = None
+        if st.session_state.estado_civil_actual == "Casado(a)":
             fecha_convivencia = st.date_input(
                 "Fecha de convivencia",
                 value=None,
                 format="DD/MM/YYYY",
                 min_value=min_allowed_date,
                 max_value=max_allowed_date,
+                key="fecha_convivencia_input",
             )
             fecha_matrimonio = st.date_input(
                 "Fecha de matrimonio",
@@ -111,73 +186,60 @@ if st.session_state.stage2 >= 1:
                 format="DD/MM/YYYY",
                 min_value=min_allowed_date,
                 max_value=max_allowed_date,
+                key="fecha_matrimonio_input",
             )
-            codred = st.selectbox(
-                "Elije una red:",
-                options=pares_codigo_nombre,
-                index=0,
-            )
-            codred = str(codred).split("|")[0]  # Obtener solo el código
-            fecha_nac = st.date_input(
-                "Fecha de nacimiento",
-                value=hoy,
-                format="DD/MM/YYYY",
-                min_value=min_allowed_date,
-                max_value=max_allowed_date,
-            )
-            estatus = st.selectbox(
-                "Estatus",
-                options=[1, 0],
-                format_func=lambda x: "Activo" if x == 1 else "Inactivo",
-            )
+        else:
+            st.session_state.pop("fecha_convivencia_input", None)
+            st.session_state.pop("fecha_matrimonio_input", None)
 
-            submitted = st.form_submit_button("Crear", use_container_width=False)
-            if submitted:
-                hoy = date.today()
-                # Define the allowed date range
-                min_allowed_date = date(1950, 1, 1)
-                max_allowed_date = hoy
-                payload = {
-                    "Cedula": cedula,
-                    "Nacionalidad": nacionalidad,
-                    "Nombre": nombre,
-                    "Apellido": apellido,
-                    "IdProfesion": profesion,
-                    "Ocupacion": ocupacion,
-                    "TelefonoCelular": telefono,
-                    "Correo": correo,
-                    "EstadoCivil": estado_civil[0],  # Solo la primera letra
-                    "FechaConvivencia": (
-                        fecha_convivencia if fecha_convivencia else None
-                    ),
-                    "FechaMatrimonio": (fecha_matrimonio if fecha_matrimonio else None),
-                    "CodRed": codred,
-                    "FechaNac": fecha_nac if fecha_nac else None,
-                    "Consolidacion": 0,
-                    "Encuentro": 0,
-                    "Academia": 0,
-                    "Lanzamiento": 0,
-                    "Estatus": estatus,
-                    "Sexo": sexo,
-                    "co_us_in": st.session_state.get("user", 0),
-                    "co_us_mo": st.session_state.get("user", 0),
-                }
-                safe = st.session_state.creyentes_crud.normalize_payload(payload)
-                new_id = st.session_state.creyentes_crud.create(safe)
-                if new_id:
-                    st.success(
-                        f"🙋‍♂️ Creyente {nombre} {apellido} creado con Id {new_id}"
-                    )
-                    actualizar_listado()
-                else:
-                    st.error("No se pudo crear el nuevo creyente.")
+        codred = st.selectbox(
+            "Elije una red:",
+            options=pares_codigo_nombre,
+            index=0,
+            key="sel_codred",
+        )
+        codred = str(codred).split("|")[0]  # Obtener solo el código
+        estatus = st.selectbox(
+            "Estatus",
+            options=[1, 0],
+            format_func=lambda x: "Activo" if x == 1 else "Inactivo",
+            key="sel_estatus",
+        )
 
-                sleep(1)
-                set_stage(2)
-
-if st.session_state.stage2 == 2:
-    set_stage(1)
-    st.rerun()
+        submitted = st.button("Crear", use_container_width=False)
+        if submitted:
+            payload = {
+                "Cedula": cedula,
+                "Nacionalidad": nacionalidad,
+                "Nombre": nombre,
+                "Apellido": apellido,
+                "IdProfesion": profesion,
+                "Ocupacion": ocupacion,
+                "TelefonoCelular": telefono,
+                "Correo": correo,
+                "EstadoCivil": st.session_state.estado_civil_actual[0],
+                "FechaConvivencia": (fecha_convivencia if fecha_convivencia else None),
+                "FechaMatrimonio": (fecha_matrimonio if fecha_matrimonio else None),
+                "CodRed": codred,
+                "FechaNac": fecha_nac if fecha_nac else None,
+                "Consolidacion": 0,
+                "Encuentro": 0,
+                "Academia": 0,
+                "Lanzamiento": 0,
+                "Estatus": estatus,
+                "Sexo": sexo,
+                "co_us_in": st.session_state.get("user", 0),
+                "co_us_mo": st.session_state.get("user", 0),
+            }
+            safe = st.session_state.creyentes_crud.normalize_payload(payload)
+            new_id = st.session_state.creyentes_crud.create(safe)
+            if new_id:
+                st.success(f"🙋‍♂️ Creyente {nombre} {apellido} creado con Id {new_id}")
+                actualizar_listado()
+                st.session_state.reset_nuevo_creyente_pending = True
+                st.rerun()
+            else:
+                st.error("No se pudo crear el nuevo creyente.")
 
 
 def build_creyentes_df(rows):
@@ -362,12 +424,12 @@ def render_creyentes_editor():
             "FechaNac": st.column_config.DateColumn(
                 "Fecha de Nacimiento",
                 help="Fecha de nacimiento del creyente.",
-                format="DD/MM/YYYY",
+                format="DD-MM-YYYY",
             ),
             "FechaIngreso": st.column_config.DateColumn(
                 "Fecha de Nacimiento",
                 help="Fecha de nacimiento del creyente.",
-                format="DD/MM/YYYY",
+                format="DD-MM-YYYY",
             ),
             "Estatus": st.column_config.CheckboxColumn(
                 "Estatus?",
@@ -393,5 +455,5 @@ def render_creyentes_editor():
 
 # Replace the big if-body with a single call
 if st.session_state.rol_user.has_permission("Creyentes", "update"):
-    with st.expander("Listado de creyentes (editor)"):
+    with st.expander("✏️ Listado de creyentes (editor)"):
         render_creyentes_editor()

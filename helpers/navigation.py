@@ -22,7 +22,7 @@ def make_sidebar():
         )
         # imagen desde URL
         # Quitar margenes
-        image_url = "images/circ-r.gif"
+        image_url = "images/fuego.gif"
 
         st.image(image_url, use_container_width=True)
         # imagen local

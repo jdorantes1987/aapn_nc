@@ -119,7 +119,7 @@ if st.session_state.stage == 1:
                 st.error("El usuario no existe. Inténtalo de nuevo.")
     else:
         # Si el usuario ya ha sido ingresado, se oculta el input y se muestra el usuario ingresado
-        st.write(f"### Usuario ingresado: {st.session_state.usuario}")
+        st.write(f"### Usuario ingresado: *:orange[{st.session_state.usuario}]*")
 
         # Pedir la contraseña
         pw = st.text_input(
