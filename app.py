@@ -87,7 +87,9 @@ def iniciar_sesion(user, password):
         st.toast(msg, icon="⚠️")
     else:
         # Verificar permisos
-        if st.session_state.rol_user.has_permission("Creyentes", "create"):
+        if st.session_state.rol_user.has_permission(
+            "Creyentes", "create"
+        ) or st.session_state.rol_user.has_permission("Creyentes", "read"):
             st.toast(msg, icon="✅")
             st.session_state.logged_in = True
             st.session_state.user = user
@@ -119,7 +121,7 @@ if st.session_state.stage == 1:
                 st.error("El usuario no existe. Inténtalo de nuevo.")
     else:
         # Si el usuario ya ha sido ingresado, se oculta el input y se muestra el usuario ingresado
-        st.write(f"### Usuario ingresado: *:orange[{st.session_state.usuario}]*")
+        st.write(f"## Usuario ingresado: *:orange[{st.session_state.usuario}]*")
 
         # Pedir la contraseña
         pw = st.text_input(

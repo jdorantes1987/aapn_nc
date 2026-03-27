@@ -8,7 +8,7 @@ st.set_page_config(page_title="Registro de nuevo creyente", layout="wide", page_
 
 make_sidebar()
 
-st.title("Gestión de Creyentes")
+st.title("Datos del nuevo creyente")
 
 
 def actualizar_listado():
@@ -26,6 +26,18 @@ def set_stage(i):
     st.session_state.stage2 = i
 
 
+def get_default_profesion_option():
+    lista_profesiones = st.session_state.get("lista_profesiones", [])
+    pares_codigo_nombre = [
+        f"{d['IdProfesion']}|{d['DescripcionProfesion'].strip()}"
+        for d in lista_profesiones
+    ]
+    for opcion in pares_codigo_nombre:
+        if opcion.split("|", 1)[1].upper() == "SIN ASIGNAR":
+            return opcion
+    return pares_codigo_nombre[0] if pares_codigo_nombre else None
+
+
 def reset_nuevo_creyente_controles():
     hoy = date.today()
 
@@ -41,9 +53,11 @@ def reset_nuevo_creyente_controles():
     st.session_state.sel_nacionalidad = "V"
     st.session_state.sel_sexo = "M"
     st.session_state.sel_estatus = 1
+    default_profesion = get_default_profesion_option()
+    if default_profesion is not None:
+        st.session_state.sel_profesion = default_profesion
 
     # Limpiar widgets de opciones dinámicas.
-    st.session_state.pop("sel_profesion", None)
     st.session_state.pop("sel_codred", None)
     st.session_state.pop("fecha_convivencia_input", None)
     st.session_state.pop("fecha_matrimonio_input", None)
@@ -90,10 +104,10 @@ if st.session_state.stage2 >= 1:
         min_allowed_date = date(1950, 1, 1)
         max_allowed_date = hoy
 
-        col1, col2 = st.columns([0.10, 0.90])
+        col1, col2 = st.columns([0.12, 0.88])
         with col1:
             nacionalidad = st.selectbox(
-                "🌐 Nacionalidad",
+                "Nacionalidad",
                 options=["V", "E"],
                 index=0,
                 help="Selecciona la nacionalidad del creyente",
@@ -101,24 +115,30 @@ if st.session_state.stage2 >= 1:
             )
         with col2:
             cedula = st.text_input(
-                "🆔 Cédula",
-                placeholder="Sin guiones ni espacios ejemplo: 12345678",
+                "Cédula *",
+                placeholder="Ejemplo: 18560791",
                 key="txt_cedula",
+                max_chars=8,
             ).upper()
 
         col3, col4 = st.columns([0.50, 0.50])
         with col3:
-            nombre = st.text_input("📝 Nombre", key="txt_nombre").upper()
+            nombre = st.text_input(
+                "📝 Nombre *", key="txt_nombre", max_chars=25
+            ).upper()
         with col4:
-            apellido = st.text_input("📝 Apellido", key="txt_apellido").upper()
+            apellido = st.text_input(
+                "📝 Apellido *", key="txt_apellido", max_chars=25
+            ).upper()
 
         col5, col6, col7, col8 = st.columns([0.24, 0.10, 0.23, 0.43])
 
         with col5:
             telefono = st.text_input(
-                "📞 Teléfono Celular",
+                "📞 Teléfono Celular *",
                 key="txt_telefono",
-                help="Sin guiones ni espacios ejemplo: 4143456789",
+                placeholder="Ejemplo: 4143456789",
+                max_chars=14,
             ).upper()
         with col6:
             sexo = st.selectbox(
@@ -138,22 +158,34 @@ if st.session_state.stage2 >= 1:
             )
 
         with col8:
-            correo = st.text_input("📧 Correo", key="txt_correo").lower()
+            correo = st.text_input(
+                "📧 Correo",
+                key="txt_correo",
+                placeholder="Ejemplo: mi_direccion@correo.com",
+                max_chars=40,
+            ).lower()
 
         lista_profesiones = st.session_state.get("lista_profesiones", [])
         pares_codigo_nombre = [
             (str(d["IdProfesion"]) + "|" + d["DescripcionProfesion"].strip())
             for d in lista_profesiones
         ]
+        default_profesion = get_default_profesion_option()
+        if (
+            default_profesion is not None
+            and st.session_state.get("sel_profesion") not in pares_codigo_nombre
+        ):
+            st.session_state.sel_profesion = default_profesion
         profesion = st.selectbox(
             "Elije una profesión:",
             options=pares_codigo_nombre,
-            index=0,
             key="sel_profesion",
         )
         profesion = str(profesion).split("|")[0]  # Obtener solo el IdProfesion
 
-        ocupacion = st.text_input("Ocupación", key="txt_ocupacion").upper()
+        ocupacion = st.text_input(
+            "Ocupación", key="txt_ocupacion", max_chars=20
+        ).upper()
 
         lista_redes = st.session_state.get("lista_redes", [])
         pares_codigo_nombre = [
@@ -208,6 +240,21 @@ if st.session_state.stage2 >= 1:
 
         submitted = st.button("Crear", use_container_width=False)
         if submitted:
+            campos_obligatorios = {
+                "Cédula": cedula,
+                "Nombre": nombre,
+                "Apellido": apellido,
+                "Teléfono": telefono,
+            }
+            faltantes = [
+                campo
+                for campo, valor in campos_obligatorios.items()
+                if not str(valor).strip()
+            ]
+            if faltantes:
+                st.error(f"Completa los campos obligatorios: {', '.join(faltantes)}")
+                st.stop()
+
             payload = {
                 "Cedula": cedula,
                 "Nacionalidad": nacionalidad,
@@ -421,12 +468,12 @@ def render_creyentes_editor():
                 help="Culminó el lanzamiento.",
                 width="small",
             ),
-            "FechaNac": st.column_config.DateColumn(
-                "Fecha de Nacimiento",
-                help="Fecha de nacimiento del creyente.",
-                format="DD-MM-YYYY",
+            "Bautizo": st.column_config.CheckboxColumn(
+                "Bautizo?",
+                help="Culminó el bautizo.",
+                width="small",
             ),
-            "FechaIngreso": st.column_config.DateColumn(
+            "FechaNac": st.column_config.DateColumn(
                 "Fecha de Nacimiento",
                 help="Fecha de nacimiento del creyente.",
                 format="DD-MM-YYYY",
@@ -442,6 +489,7 @@ def render_creyentes_editor():
             "Id",
             "co_us_in",
             "fe_us_in",
+            "Bautizo",
             "Consolidacion",
             "Encuentro",
             "Academia",

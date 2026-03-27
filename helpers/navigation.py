@@ -39,7 +39,10 @@ def make_sidebar():
 # TODO Rename this here and in `make_sidebar`
 def _extracted_from_make_sidebar():
     st.page_link("pages/page1.py", label="Inicio", icon=None)
-    st.page_link("pages/page2.py", label="Registro", icon=None)
+    if st.session_state.rol_user.has_permission("Creyentes", "create"):
+        st.page_link("pages/page2.py", label="Registro", icon=None)
+    if st.session_state.rol_user.has_permission("Creyentes", "read"):
+        st.page_link("pages/page3.py", label="Consultar datos", icon=None)
 
     if st.button(
         "Cerrar sesión",

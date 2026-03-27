@@ -27,7 +27,7 @@ st.write(
 
 st.write(
     """
-    ## ✳️ ¿Cómo realizar un nuevo registro?
+    ## ¿Cómo realizar un nuevo registro?
     """
 )
 
@@ -50,7 +50,7 @@ texto = """
         - 📅 **:blue[Fecha de convivencia]**:
         - 📅 **:blue[Fecha de matrimonio]**:
         - 🌐 **:blue[Red]**:
-        - ✅ **:blue[Estatus]**:
-    3. **Crear registro**: Presiona el botón :gray-badge[Crear] para guardar el nuevo creyente.
+        - **:blue[Estatus]**:
+    3. **✳️ Crear registro**: Presiona el botón :gray-badge[Crear] para guardar el nuevo creyente.
 """
 st.write_stream(stream_data(texto))
