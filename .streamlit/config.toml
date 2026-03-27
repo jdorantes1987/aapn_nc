@@ -2,8 +2,17 @@
 showSidebarNavigation = false
 
 [theme]
-primaryColor="#EB664E"
+primaryColor="#e6b145"
 backgroundColor="#ffffffff"
 secondaryBackgroundColor="#F5F3ED"
 textColor="#31333F"
-font="monospace"
+
+# Base text
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+baseFontWeight = 400
+baseFontSize = 15
+
+# Heading text
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+headingFontWeights = [600, 600, 600, 200, 600, 200]
+headingFontSizes = ["3rem", "1.5rem", "1rem", "1rem", "0.8rem", "0.8rem"]
