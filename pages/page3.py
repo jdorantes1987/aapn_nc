@@ -47,6 +47,7 @@ def build_creyentes_df(rows):
             "C": "Casado(a)",
             "D": "Divorciado(a)",
             "V": "Viudo(a)",
+            "U": "Unión de hecho",
         }
         df["EstadoCivilTexto"] = (
             df["EstadoCivil"].map(estado_civil_map).fillna(df["EstadoCivil"])

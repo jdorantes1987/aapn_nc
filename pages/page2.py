@@ -194,7 +194,13 @@ if st.session_state.stage2 >= 1:
 
         estado_civil = st.selectbox(
             "Estado Civil",
-            options=["Soltero(a)", "Casado(a)", "Divorciado(a)", "Viudo(a)"],
+            options=[
+                "Soltero(a)",
+                "Casado(a)",
+                "Divorciado(a)",
+                "Viudo(a)",
+                "Unión de hecho",
+            ],
             index=0,
             key="estado_civil_select",
         )
@@ -203,7 +209,7 @@ if st.session_state.stage2 >= 1:
 
         fecha_convivencia = None
         fecha_matrimonio = None
-        if st.session_state.estado_civil_actual == "Casado(a)":
+        if st.session_state.estado_civil_actual in ["Casado(a)", "Unión de hecho"]:
             fecha_convivencia = st.date_input(
                 "Fecha de convivencia",
                 value=None,
